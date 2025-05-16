@@ -13,15 +13,24 @@ public class Animation : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //  animator = GetComponent<Animator>();
+         animator = GetComponent<Animator>();
+       //animator = GetComponentInChildren<Animator>(); //
         animator.SetBool("walk", true);
     }
  
 
     // Update is called once per frame
-    void Update()
-    {
+   
+   
+        void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Z)) // Trigger with the Z key
+            {
+                animator.SetBool("zap", true);
+            }
         
+    
+
       //  animator.SetBool("flying", true);
       //  BigBird.transform.Translate(Vector3.forward * .02f);
        // BigBird.transform.localScale = new Vector3(50 + Asteroid.i*3 , 50 + Asteroid.i*3 , 50 + Asteroid.i*3 );
@@ -39,6 +48,7 @@ public class Animation : MonoBehaviour
             animator.SetBool("swim", false);
             animator.SetBool("run", false);
             animator.SetBool("unArmedW", false);
+            animator.SetBool("zap", false);
         }
         if (Input.GetKey(KeyCode.DownArrow))
         {
@@ -51,6 +61,7 @@ public class Animation : MonoBehaviour
             animator.SetBool("swim", false);
             animator.SetBool("run", false);
             animator.SetBool("unArmedW", false);
+            animator.SetBool("zap", false);
         }
         if (Input.GetKey(KeyCode.M))
         {
@@ -63,13 +74,14 @@ public class Animation : MonoBehaviour
             animator.SetBool("swim", false);
             animator.SetBool("run", true);
             animator.SetBool("unArmedW", false);
+            animator.SetBool("zap", false);
         }
        
-        if (Input.GetKey(KeyCode.N))
+        if (Input.GetKey(KeyCode.Z))
         {
-            _count++;
+            
             Player.moveSpeed = 0f;
-             animator.SetBool("spell", true);
+             animator.SetBool("spell", false);
             animator.SetBool("walk",false);
             animator.SetBool("zombie", false);
             animator.SetBool("jog", false);
@@ -77,6 +89,10 @@ public class Animation : MonoBehaviour
             animator.SetBool("swim", false);
             animator.SetBool("run", false);
             animator.SetBool("unArmedW", false);
+            animator.SetBool("handsUp", false);
+            animator.SetBool("zap", true);
+
+            // animator.Play("Hands Forward Gesture");
         }
         if (Input.GetKey(KeyCode.B))
         {
@@ -89,7 +105,8 @@ public class Animation : MonoBehaviour
             animator.SetBool("swim", true);
             animator.SetBool("run", false);
             animator.SetBool("unArmedW", false);
+            animator.SetBool("zap", false);
         }
-       
+       // animator.SetBool("spell", false);
     }
 }
