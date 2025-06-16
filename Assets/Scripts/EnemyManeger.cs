@@ -3,107 +3,85 @@ using UnityEngine;
 public class EnemyManager : MonoBehaviour
 {
     public Transform[] enemies;
-    public float detectionDistance = 30f;
+    public float detectionDistance = 50f;
     public float stopDistance = 15f;
     public float walkSpeed = 2f;
     public float runSpeed = 4f;
     public LayerMask playerLayer;
-    float closestDistance = 50;
+    public GameObject pressZText; // Drag your "Press Z" UI object here
+
     private Transform player;
-    public static GameObject text;
+
     private void Start()
     {
-        text.SetActive(false);
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        pressZText.SetActive(false); // Hide by default
     }
 
-   
-        private void Update()
+    private void Update()
     {
-        if (player == null) return;
+        if (player == null || enemies == null || enemies.Length == 0) return;
 
-        float closestDistance =20f; ;
-
-
+        bool shouldShowText = false;
+       
         foreach (Transform enemy in enemies)
         {
             if (enemy == null) continue;
-
+            float distance = Vector3.Distance(enemy.position, player.position);
+            Debug.Log(distance);    
             Animator animator = enemy.GetComponentInChildren<Animator>();
             if (animator == null) continue;
 
-            float distance = Vector3.Distance(enemy.position, player.position);
+            
            
-           closestDistance = Mathf.Min(closestDistance, distance);
             if (distance > detectionDistance)
             {
-                animator.SetBool("Bcry", true);
-                animator.SetBool("idle", false);
-                animator.SetBool("taunt", false);
-                animator.SetBool("walk", false);
-                animator.SetBool("punch", false);
-                animator.SetBool("run", false);
+                SetAnimState(animator, "Bcry");
             }
-
             else if (distance > stopDistance * 2)
             {
-                animator.SetBool("Bcry", false);
-                animator.SetBool("idle", false);
-                animator.SetBool("taunt", false);
-                animator.SetBool("walk", true);
-                animator.SetBool("punch", false);
-                animator.SetBool("run", false);
-
-                MoveTowardsPlayer(enemy, runSpeed); // <--- RUN toward player
+                SetAnimState(animator, "walk");
+                MoveTowardsPlayer(enemy, runSpeed);
             }
             else if (distance > stopDistance)
             {
-                animator.SetBool("Bcry", false);
-                animator.SetBool("idle", false);
-                animator.SetBool("taunt", true);
-                animator.SetBool("walk", false);
-                animator.SetBool("punch", false);
-                animator.SetBool("run", false);
-
-                MoveTowardsPlayer(enemy, walkSpeed); // <--- SLOW walk
+                SetAnimState(animator, "taunt");
+                MoveTowardsPlayer(enemy, walkSpeed);
             }
             else
             {
-                animator.SetBool("Bcry", false);
-                animator.SetBool("idle", false);
-                animator.SetBool("taunt", false);
-                animator.SetBool("walk", false);
-                animator.SetBool("punch", true);
-                animator.SetBool("run", false);
+                SetAnimState(animator, "punch");
             }
-           
-          
-           
 
-                text.SetActive(false);
-            if (distance < 30f && distance > 10f)
-            {
-                text.SetActive(true);
-            }
-            else
-            {
-                text.SetActive(false);
-            }
-            
-
+            // Show text only if one enemy is in range
+            if (distance < 50f && distance > 35f)
+                shouldShowText = true;
         }
+
+        pressZText.SetActive(shouldShowText);
     }
+    public void RemoveEnemy(Transform enemyToRemove)
+    {
+        var list = new System.Collections.Generic.List<Transform>(enemies);
+        list.Remove(enemyToRemove);
+        enemies = list.ToArray();
+    }
+
 
     private void MoveTowardsPlayer(Transform enemy, float speed)
     {
         Vector3 direction = (player.position - enemy.position).normalized;
-        direction.y = 0; // Prevent vertical movement
+        direction.y = 0;
         enemy.position += direction * speed * Time.deltaTime;
-        enemy.rotation = Quaternion.LookRotation(direction); // Face player
+        enemy.rotation = Quaternion.LookRotation(direction);
     }
 
-    // Helper to switch animation cleanly
-   
+    private void SetAnimState(Animator animator, string activeState)
+    {
+        string[] allStates = { "Bcry", "idle", "taunt", "walk", "punch", "run" };
+        foreach (string state in allStates)
+        {
+            animator.SetBool(state, state == activeState);
+        }
+    }
 }
-
-    

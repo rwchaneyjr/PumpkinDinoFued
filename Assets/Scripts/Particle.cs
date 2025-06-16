@@ -3,39 +3,49 @@ using UnityEngine;
 
 public class Particle : MonoBehaviour
 {
-    public GameObject Dino;                 // Assign the Dino model (the thing to disappear)
-    public ParticleSystem smokeParticle;   // Assign the smoke ParticleSystem
-
-    private bool hasActivated = false;
-
+    public GameObject Dino;                 // The enemy model to hide (usually a child of the prefab)
+    public ParticleSystem smokeParticle;   // Smoke effect to play
+    public bool hasBeenZapped = false;
+    public GameObject pressZText; // Drag
+    private bool hasActivated = false; 
     private void Start()
     {
         if (smokeParticle != null)
             smokeParticle.Stop();
     }
 
-    // ✅ This is the method Lightning.cs will call
+    // Call this when zapped
     public void StartEffect()
     {
-        if (!hasActivated)
+        if (!hasActivated && !hasBeenZapped)
         {
             hasActivated = true;
+            hasBeenZapped = true;
             StartCoroutine(DoEffect());
+           // Hide the text when the enemy is zapped
+            EnemyManager manager = FindObjectOfType<EnemyManager>();
+            if (manager != null && Dino != null)
+            {
+                manager.RemoveEnemy(Dino.transform);
+            }
+
         }
     }
 
+
     private IEnumerator DoEffect()
     {
-        yield return new WaitForSeconds(2f); // Delay before smoke
+        // Optional: small delay before effect
+        yield return new WaitForSeconds(0.2f);
 
         if (smokeParticle != null)
             smokeParticle.Play();
 
-        yield return new WaitForSeconds(1f); // Let smoke play
+        // Optional delay to let smoke play first
+        yield return new WaitForSeconds(0.5f);
 
         if (Dino != null)
-            Dino.SetActive(false); // Turn off just this enemy
-
-        gameObject.SetActive(false); // Optional: disable this script object
+            Dino.SetActive(false); // "Magically" disappear
+        smokeParticle.gameObject.SetActive(false);
     }
 }

@@ -31,7 +31,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!120 &1465606067673416818
 LineRenderer:
@@ -85,8 +85,8 @@ LineRenderer:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0.05301939
-        value: 0.25242704
+        time: 0.060606822
+        value: 0.43992704
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -149,8 +149,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93e9f2343658dba49abf231896480756, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startPoint: {fileID: 0}
-  endPoint: {fileID: 0}
-  lifeTime: 0.75
-  segments: 37
-  jitterAmount: 0.5

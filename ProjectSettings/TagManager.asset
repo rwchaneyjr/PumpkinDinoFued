@@ -8,6 +8,7 @@ TagManager:
   - enemy1
   - Enemy
   - Rhand
+  - Lightning
   layers:
   - Default
   - TransparentFX

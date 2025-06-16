@@ -1,16 +1,13 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class Lightning : MonoBehaviour
 {
     public GameObject lightningBoltPrefab;
-    public Transform startPoint;
-    public int maxTargets = 5;
-    public float maxDistance = 50f;
-    public float minSeparationBetweenTargets = 30f; // prevent double zaps on overlapping enemies
+    public Transform startPoint; // Player's hand
     public Animator animator;
+    public float maxDistance = 50f;
+    public string enemyTag = "Enemy"; // Make sure your enemies are tagged correctly
 
     private bool hasFired = false;
 
@@ -18,73 +15,81 @@ public class Lightning : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Z) && !hasFired)
         {
-            animator.SetBool("zap", true);
-            FireLightning();
             hasFired = true;
-        }
 
-        if (Input.GetKeyUp(KeyCode.Z))
-        {
-            animator.SetBool("zap", false);
-            hasFired = false;
-        }
-
-
-    
-            if (Input.GetKeyDown(KeyCode.Z) && !hasFired)
-            {
-                hasFired = true;
+            if (animator != null)
                 animator.SetBool("zap", true);
-                FireLightning();
-                StartCoroutine(ResetFire(0.5f));
-          
-            }
-        }
 
-        IEnumerator ResetFire(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            hasFired = false;
-            animator.SetBool("zap", false);
-    
-        }
+            // Find the closest enemy that is active and not zapped
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+            GameObject closestEnemy = null;
+            float closestDistance = Mathf.Infinity;
 
-        void FireLightning()
-    {
-        GameObject[] enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
-
-        var sortedEnemies = enemyObjects
-            .Where(e => e.activeInHierarchy)
-            .OrderBy(e => Vector3.Distance(startPoint.position, e.transform.position))
-            .ToList();
-
-        List<Vector3> zapPositions = new List<Vector3>();
-        int targetsHit = 0;
-
-        foreach (var enemy in sortedEnemies)
-        {
-            if (targetsHit >= maxTargets) break;
-
-            float distance = Vector3.Distance(startPoint.position, enemy.transform.position);
-            if (distance > maxDistance) continue;
-
-            // Skip enemies too close to ones already zapped
-            bool tooCloseToZapped = zapPositions.Any(pos =>
-                Vector3.Distance(pos, enemy.transform.position) < minSeparationBetweenTargets);
-
-            if (tooCloseToZapped) continue;
-
-            // Spawn lightning
-            GameObject bolt = Instantiate(lightningBoltPrefab);
-            LightningBolt boltScript = bolt.GetComponent<LightningBolt>();
-            if (boltScript != null)
+            foreach (GameObject enemy in enemies)
             {
-                boltScript.Initialize(startPoint, enemy.transform);
+                if (!enemy.activeInHierarchy) continue;
+
+                Particle p = enemy.GetComponentInChildren<Particle>();
+                if (p == null || p.hasBeenZapped) continue; // Skip already zapped
+
+                float dist = Vector3.Distance(startPoint.position, enemy.transform.position);
+                if (dist < maxDistance && dist < closestDistance)
+                {
+                    closestDistance = dist;
+                    closestEnemy = enemy;
+                }
             }
 
-            enemy.SetActive(false);
-            zapPositions.Add(enemy.transform.position);
-            targetsHit++;
+            // If a target was found
+            if (closestEnemy != null)
+            {
+                // Create the lightning bolt
+                GameObject bolt = Instantiate(lightningBoltPrefab);
+                LineRenderer lr = bolt.GetComponent<LineRenderer>();
+
+                if (lr != null)
+                {
+                    int segments = 20;
+                    float jitterAmount = 0.5f;
+
+                    lr.positionCount = segments;
+                    Vector3 startPos = startPoint.position;
+                    Vector3 endPos = closestEnemy.transform.position;
+
+                    for (int i = 0; i < segments; i++)
+                    {
+                        float t = (float)i / (segments - 1);
+                        Vector3 point = Vector3.Lerp(startPos, endPos, t);
+
+                        // Add jitter
+                        Vector3 offset = new Vector3(
+                            Random.Range(-jitterAmount, jitterAmount),
+                            Random.Range(-jitterAmount, jitterAmount),
+                            Random.Range(-jitterAmount, jitterAmount)
+                        );
+
+                        lr.SetPosition(i, point + offset);
+                    }
+                }
+
+                // Trigger the smoke effect
+                Particle particle = closestEnemy.GetComponentInChildren<Particle>();
+                if (particle != null)
+                {
+                    particle.StartEffect(); // Mark as zapped and play smoke
+                }
+            }
+
+            StartCoroutine(ResetFire(0.5f));
         }
+    }
+
+    IEnumerator ResetFire(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        hasFired = false;
+
+        if (animator != null)
+            animator.SetBool("zap", false);
     }
 }
