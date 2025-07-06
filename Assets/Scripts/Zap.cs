@@ -14,9 +14,10 @@ using UnityEngine;
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.N)) // Trigger with the Z key
+            if (Input.GetKeyDown(KeyCode.Z)) // Trigger with the Z key
             {
                 animator.SetBool("zap", true);
             }
+        animator.SetBool("zap", false);
         }
     }

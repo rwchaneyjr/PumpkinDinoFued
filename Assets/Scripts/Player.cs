@@ -13,7 +13,7 @@ public class Player : MonoBehaviour
    
         void Update()
         {
-
+     
         transform.Translate(Vector3.forward * Time.deltaTime * moveSpeed, Space.World);
 
            if (Input.GetKey(KeyCode.LeftArrow))

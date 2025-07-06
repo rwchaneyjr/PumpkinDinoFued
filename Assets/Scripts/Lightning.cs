@@ -20,7 +20,6 @@ public class Lightning : MonoBehaviour
             if (animator != null)
                 animator.SetBool("zap", true);
 
-            // Find the closest enemy that is active and not zapped
             GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
             GameObject closestEnemy = null;
             float closestDistance = Mathf.Infinity;
@@ -28,9 +27,6 @@ public class Lightning : MonoBehaviour
             foreach (GameObject enemy in enemies)
             {
                 if (!enemy.activeInHierarchy) continue;
-
-                Particle p = enemy.GetComponentInChildren<Particle>();
-                if (p == null || p.hasBeenZapped) continue; // Skip already zapped
 
                 float dist = Vector3.Distance(startPoint.position, enemy.transform.position);
                 if (dist < maxDistance && dist < closestDistance)
@@ -40,56 +36,57 @@ public class Lightning : MonoBehaviour
                 }
             }
 
-            // If a target was found
             if (closestEnemy != null)
             {
-                // Create the lightning bolt
                 GameObject bolt = Instantiate(lightningBoltPrefab);
                 LineRenderer lr = bolt.GetComponent<LineRenderer>();
 
                 if (lr != null)
                 {
                     int segments = 20;
-                    float jitterAmount = 0.5f;
+                    float jitterAmount = 0.7f;
 
                     lr.positionCount = segments;
-                    Vector3 startPos = startPoint.position;
-                    Vector3 endPos = closestEnemy.transform.position;
+                    Vector3 startPos = startPoint != null
+                        ? startPoint.position
+                        : transform.position + new Vector3(0, 1f, 0); // fallback to chest center
+
+                    Vector3 endPos = closestEnemy.transform.position + new Vector3(0, 1f, 0); // aim at chest
 
                     for (int i = 0; i < segments; i++)
                     {
                         float t = (float)i / (segments - 1);
                         Vector3 point = Vector3.Lerp(startPos, endPos, t);
-
-                        // Add jitter
                         Vector3 offset = new Vector3(
                             Random.Range(-jitterAmount, jitterAmount),
                             Random.Range(-jitterAmount, jitterAmount),
                             Random.Range(-jitterAmount, jitterAmount)
                         );
-
                         lr.SetPosition(i, point + offset);
                     }
                 }
 
-                // Trigger the smoke effect
                 Particle particle = closestEnemy.GetComponentInChildren<Particle>();
                 if (particle != null)
                 {
-                    particle.StartEffect(); // Mark as zapped and play smoke
+                    particle.StartEffect();
                 }
             }
 
-            StartCoroutine(ResetFire(0.5f));
+            // ✅ Reset zap after delay
+            StartCoroutine(ResetFire(1f));
         }
     }
 
-    IEnumerator ResetFire(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        hasFired = false;
 
-        if (animator != null)
-            animator.SetBool("zap", false);
-    }
+
+    public IEnumerator ResetFire(float delay)
+   {
+       yield return new WaitForSeconds(delay);
+       hasFired = false;
+
+       if (animator != null)
+          animator.SetBool("zap", false);
+   }
+
 }

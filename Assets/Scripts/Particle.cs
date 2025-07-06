@@ -3,49 +3,48 @@ using UnityEngine;
 
 public class Particle : MonoBehaviour
 {
-    public GameObject Dino;                 // The enemy model to hide (usually a child of the prefab)
-    public ParticleSystem smokeParticle;   // Smoke effect to play
+    public GameObject Dino;                    // The enemy or object to hide (optional)
+    public ParticleSystem smokeParticle;       // Smoke effect to play
+    //public ParticleSystem explosionParticle;   // Explosion effect to play
+    public GameObject player;                  // The player GameObject to hide
     public bool hasBeenZapped = false;
-    public GameObject pressZText; // Drag
-    private bool hasActivated = false; 
+
+    private bool hasActivated = false;
+
     private void Start()
     {
-        if (smokeParticle != null)
-            smokeParticle.Stop();
+        if (smokeParticle != null) smokeParticle.Stop();
+      //  if (explosionParticle != null) explosionParticle.Stop();
     }
 
-    // Call this when zapped
+    // Allow external trigger (Raycast, Button, etc.)
     public void StartEffect()
     {
-        if (!hasActivated && !hasBeenZapped)
-        {
-            hasActivated = true;
-            hasBeenZapped = true;
-            StartCoroutine(DoEffect());
-           // Hide the text when the enemy is zapped
-            EnemyManager manager = FindObjectOfType<EnemyManager>();
-            if (manager != null && Dino != null)
-            {
-                manager.RemoveEnemy(Dino.transform);
-            }
+        if (hasActivated || hasBeenZapped) return;
 
+        hasActivated = true;
+        hasBeenZapped = true;
+        StartCoroutine(DoEffect());
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            StartEffect();
         }
     }
 
-
-    private IEnumerator DoEffect()
+    public IEnumerator DoEffect()
     {
-        // Optional: small delay before effect
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.1f);
 
-        if (smokeParticle != null)
-            smokeParticle.Play();
+        if (smokeParticle != null) smokeParticle.Play();
+       // if (explosionParticle != null) explosionParticle.Play();
 
-        // Optional delay to let smoke play first
         yield return new WaitForSeconds(0.5f);
 
-        if (Dino != null)
-            Dino.SetActive(false); // "Magically" disappear
-        smokeParticle.gameObject.SetActive(false);
+        if (Dino != null) Dino.SetActive(false);
+       // if (player != null) player.SetActive(false);
     }
 }
