@@ -13,7 +13,7 @@ public class Lightning : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Z) && !hasFired)
+        if (Input.GetKeyDown(KeyCode.Z) )//&& !hasFired)
         {
             hasFired = true;
 
@@ -24,19 +24,48 @@ public class Lightning : MonoBehaviour
             GameObject closestEnemy = null;
             float closestDistance = Mathf.Infinity;
 
+         
             foreach (GameObject enemy in enemies)
             {
-                if (!enemy.activeInHierarchy) continue;
+                if (!enemy.activeInHierarchy)
+                {
+                    Debug.Log(enemy.name + " is inactive.");
+                    continue;
+                }
 
                 Particle p = enemy.GetComponentInChildren<Particle>();
-                if (p == null || p.hasBeenZapped) continue; // ✅ Skip already zapped
+                if (p == null)
+                {
+                    Debug.Log(enemy.name + " has no Particle script.");
+                    continue;
+                }
+
+                if (p.hasBeenZapped)
+                {
+                    Debug.Log(enemy.name + " has already been zapped.");
+                    continue;
+                }
 
                 float dist = Vector3.Distance(startPoint.position, enemy.transform.position);
+                Debug.Log(enemy.name + " distance: " + dist);
+
                 if (dist < maxDistance && dist < closestDistance)
                 {
                     closestDistance = dist;
                     closestEnemy = enemy;
+                    Debug.Log("New closest: " + closestEnemy.name);
                 }
+            }
+
+            if (closestEnemy == null)
+            {
+                Debug.LogWarning("⚠️ No enemy found to zap. Check tags, zapped status, and distance.");
+            }
+            else
+            {
+                Debug.Log("✅ Zapping " + closestEnemy.name);
+                Particle particle = closestEnemy.GetComponentInChildren<Particle>();
+                if (particle != null) particle.StartEffect();
             }
 
 
