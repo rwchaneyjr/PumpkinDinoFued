@@ -1,138 +1,103 @@
-﻿
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+
 public class Rat_Croc : MonoBehaviour
 {
+    private Dictionary<Transform, float> animTimers = new();
+    private float animationCycleTime = 2.5f;
+    private Dictionary<Transform, string> currentAnimState = new(); // track what each enemy is playing
+
     public Transform[] enemies;
     public float detectionDistance = 50f;
     public float stopDistance = 15f;
     public float walkSpeed = 2f;
-    //   public float runSpeed = 4f;
-    public LayerMask playerLayer;
     private Particle currentTarget;
 
-    public Camera mainCamera; // Assign the main camera in the Inspector
-    public LayerMask enemyLayer; // Set this to Enemy layer
-    public TextMeshProUGUI zapText; // TMP text that says "Press Z to Zap"
+    public Camera mainCamera;
+    public LayerMask enemyLayer;
+    public TextMeshProUGUI zapText;
 
     private Transform player;
 
-    // Optional: use a dictionary to define custom animation sets
-    private Dictionary<string, string[]> enemyAnimationSets = new Dictionary<string, string[]>
-    {
-        { "Rat", new[] { "Bcry","idle", "walk", "taunt" } },
-        { "Croc", new[] { "Bcry", "walk", "punch", "idle" } },
-        { "Dino", new[] { "idle", "Bcry", "punch", "walk" } },
-        { "Stone",new[] { "idle","taunt", "Bcry","walk"} },
-         {"Robot", new[] {  "idle","taunt", "Bcry","walk"} }
-    };
+    public string enemyTag = "Enemy";
+    // public TextMeshProUGUI pressZText;  // drag TMP component here
+    //   zapText.text = "Press Z to Zap";
 
+    private string[] animChoices = { "idle", "Bcry", "walk" };
 
-    public string enemyTag = "Enemy"; // Make sure all enemies are tagged as "Enemy"
-    public string idleAnimationParam = "idle"; // Name of the animation parameter (if using triggers/bools)
     void Start()
     {
-        zapText.gameObject.SetActive(false);
-        // prompt.enabled = false;
+        // zapText.gameObject.SetActive(false);
         player = GameObject.FindWithTag("Player")?.transform;
-
+        zapText.text = "Press Z to Zap";
         GameObject[] enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
         enemies = enemyObjects.Select(e => e.transform).ToArray();
 
         foreach (Transform enemy in enemies)
         {
-            // Lift enemy upward by 4 units
             Vector3 pos = enemy.position;
-            pos.y += 2f;
+            if (pos.y > -15.6)
+                pos.y += .01f;
             enemy.position = pos;
 
-            // Set idle animation using bools if Animator is available
-            Animator animator = enemy.GetComponent<Animator>();
-            if (animator == null)
-                animator = enemy.GetComponentInChildren<Animator>();
+            animTimers[enemy] = Random.Range(0f, animationCycleTime); // desync animations
+            currentAnimState[enemy] = "idle";
+
+            Animator animator = enemy.GetComponent<Animator>() ?? enemy.GetComponentInChildren<Animator>();
 
             if (animator != null)
             {
-                string[] allStates = { "idle", "walk", "Bcry", "taunt", "punch" };
-                foreach (string state in allStates)
+                foreach (string state in animChoices)
                 {
                     if (HasParameter(animator, state))
                     {
-                        animator.SetBool(state, state == "idle");
-                    }
-                }
-            }
-            if (animator != null)
-            {
-                string[] allStates = { "idle", "walk", "Bcry", "taunt", "punch" };
-                foreach (string state in allStates)
-                {
-                    if (HasParameter(animator, state))
-                    {
-                        animator.SetBool(state, state == "idle");
+                        animator.SetBool(state, state == "idle"); // start with idle
                     }
                 }
             }
         }
     }
 
-
-    private void Update()
+    void Update()
     {
         if (player == null || enemies == null || enemies.Length == 0) return;
 
-        // 1. Default to hide the zap text and clear target
         zapText.gameObject.SetActive(false);
         currentTarget = null;
 
-        // 2. Enemy AI behavior loop
         foreach (Transform enemy in enemies)
         {
-            float distance = Vector3.Distance(enemy.position, player.position);
             Animator animator = enemy.GetComponentInChildren<Animator>();
             if (animator == null) continue;
 
-            string enemyType = enemy.tag;
-            if (!enemyAnimationSets.ContainsKey(enemyType)) continue;
+            animTimers[enemy] += Time.deltaTime;
+            if (animTimers[enemy] >= animationCycleTime)
+            {
+                animTimers[enemy] = 0f;
 
-            string[] animStates = enemyAnimationSets[enemyType];
-            string nextState = "idle";
+                // Pick a random state for this enemy
+                string newState = animChoices[Random.Range(0, animChoices.Length)];
+                currentAnimState[enemy] = newState;
 
-            if (distance > detectionDistance)
-            {
-                nextState = "idle";
-            }
-            else if (distance > stopDistance * 2)
-            {
-                nextState = "Bcry";
-            }
-            else if (distance > stopDistance)
-            {
-                nextState = "walk";
-            }
-            else
-            {
-                nextState = "Bcry";
+                SetAnimState(animator, newState, animChoices);
             }
 
-            SetAnimState(animator, nextState, animStates);
-
-            // Optional: Snap Y-position if needed
+            // Optional: Snap to ground
             if (enemy.tag == "Enemy")
             {
                 Vector3 fixedPos = enemy.position;
-                fixedPos.y = -14.5f;
+                  fixedPos.y = -14.7f;
                 enemy.position = fixedPos;
             }
         }
 
-        // 3. Single raycast to check for zap target
-        Ray ray = new Ray(player.position, player.forward);
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, 50f, enemyLayer))
+        // Zap targeting logic
+        Vector3 angledDirection = Quaternion.Euler(-10f, 0, 0) * player.forward;
+        Ray ray = new Ray(player.position + Vector3.up * 1.5f, angledDirection);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 50f, enemyLayer))
         {
             float dist = Vector3.Distance(player.position, hit.point);
             if (dist > 35f && dist < 50f)
@@ -146,7 +111,6 @@ public class Rat_Croc : MonoBehaviour
             }
         }
 
-        // 4. Fire if Z is pressed and a target is locked
         if (Input.GetKeyDown(KeyCode.Z) && currentTarget != null)
         {
             currentTarget.StartEffect();
@@ -162,7 +126,6 @@ public class Rat_Croc : MonoBehaviour
         enemy.rotation = Quaternion.LookRotation(direction);
     }
 
-
     public void SetAnimState(Animator animator, string activeState, string[] validStates)
     {
         foreach (string state in validStates)
@@ -174,8 +137,6 @@ public class Rat_Croc : MonoBehaviour
         }
     }
 
-
-    // This helper checks if the Animator has a parameter
     public bool HasParameter(Animator animator, string paramName)
     {
         foreach (AnimatorControllerParameter param in animator.parameters)
