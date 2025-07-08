@@ -35,8 +35,8 @@ public class Player : MonoBehaviour
       // anim.speed = 0;
        // anim.SetBool("run", true);
        // anim.enabled = false;
-       transform.localScale = new Vector3(1+Asteroid.i/3, 1 + Asteroid.i / 3, 1 + Asteroid.i / 3);
+    //   transform.localScale = new Vector3(1+Asteroid.i/3, 1 + Asteroid.i / 3, 1 + Asteroid.i / 3);
       //  Debug.Log(1 + Asteroid.i / 3);
-        transform.position = new Vector3(transform.position.x,(-14.6f) + Asteroid.i / 6f, transform.position.z);
+      // transform.position = new Vector3(transform.position.x,(-14.6f) + Asteroid.i / 6f, transform.position.z);
     }
     }
