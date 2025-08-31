@@ -13,17 +13,17 @@ public class Player : MonoBehaviour
    
         void Update()
         {
-
+     
         transform.Translate(Vector3.forward * Time.deltaTime * moveSpeed, Space.World);
 
-           if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+           if (Input.GetKey(KeyCode.LeftArrow))
            {
                if (this.gameObject.transform.position.x > LevelBoundary.leftSide)
                {
                    transform.Translate(Vector3.left * Time.deltaTime * leftRightSpeed);
                }
            }
-           if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+           if (Input.GetKey(KeyCode.RightArrow))
            {
                if (this.gameObject.transform.position.x < LevelBoundary.rightSide)
                {
@@ -35,8 +35,8 @@ public class Player : MonoBehaviour
       // anim.speed = 0;
        // anim.SetBool("run", true);
        // anim.enabled = false;
-       transform.localScale = new Vector3(1+Asteroid.i/3, 1 + Asteroid.i / 3, 1 + Asteroid.i / 3);
+    //   transform.localScale = new Vector3(1+Asteroid.i/3, 1 + Asteroid.i / 3, 1 + Asteroid.i / 3);
       //  Debug.Log(1 + Asteroid.i / 3);
-        transform.position = new Vector3(transform.position.x,(-14.6f) + Asteroid.i / 6f, transform.position.z);
+      // transform.position = new Vector3(transform.position.x,(-14.6f) + Asteroid.i / 6f, transform.position.z);
     }
     }

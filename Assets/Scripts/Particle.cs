@@ -1,46 +1,72 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 public class Particle : MonoBehaviour
 {
-    public GameObject Dino;
-    
-    public ParticleSystem smokeParticles;
-    private float timer = 3f;
-    bool _check = false;
+    public GameObject Dino;                    // The enemy or object to hide (optional)
+    public ParticleSystem smokeParticle;       // Smoke effect to play
+   public ParticleSystem explosionParticle;   // Explosion effect to play
+    public GameObject player;                  // The player GameObject to hide
+    public bool hasBeenZapped = false;
+   public int num = 0;
+    private bool hasActivated = false;
+    public static int zapCount = 0;
+
+
     private void Start()
     {
-        smokeParticles.Stop();  
+        if (smokeParticle != null) smokeParticle.Stop();
+        if (explosionParticle != null) explosionParticle.Stop();
+        //  if (explosionParticle != null) explosionParticle.Stop();
     }
+
+    // Allow external trigger (Raycast, Button, etc.)
+    public void StartEffect()
+    {
+        if (hasActivated || hasBeenZapped) return;
+       num= 0;
+        hasActivated = true;
+        hasBeenZapped = true;
+        StartCoroutine(DoEffect());
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            StartEffect();
+        }
+    }
+
     public IEnumerator DoEffect()
     {
-        // Play electric charge
-    
 
+        yield return new WaitForSeconds(0.1f);
+
+        if (explosionParticle != null) explosionParticle.Play();
+        yield return new WaitForSeconds(0.2f);
+
+        if (smokeParticle != null) smokeParticle.Play();
       
+       // if (explosionParticle != null) explosionParticle.Play();
 
-        // Show lightning
-     
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(0.5f);
 
-     
-
-        // Play smoke puff
-        smokeParticles.Play();
-
-     
-      GameObject.FindGameObjectWithTag("enemy1").SetActive(false);
-    }
-    private void Update()
-    {
-        if (Input.GetKey(KeyCode.N))
+        if (Dino != null)
         {
-            StartCoroutine(DoEffect());
-            _check = true;
+            Dino.SetActive(false);
+            zapCount++;
         }
-        
-      
-        
+
+        if (zapCount == 5)
+        {
+            int current = SceneManager.GetActiveScene().buildIndex;
+            if (current == 0)
+                SceneManager.LoadScene(1); // Go to scene 1
+            else
+                SceneManager.LoadScene(0); // Go back to scene 0
+        }
+
     }
 }
